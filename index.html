@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>展开与设计 · 课堂练习</title>
+    <style>
+        :root {
+            --bg: #f5f0eb;
+            --card-bg: #ffffff;
+            --primary: #4a6fa5;
+            --success: #4caf84;
+            --error: #e07b6c;
+            --warning: #f0b050;
+            --text: #3d3a4d;
+            --text-light: #6b6880;
+            --border: #e8e3dc;
+            --shadow: 0 2px 16px rgba(60, 40, 30, 0.07);
+            --shadow-hover: 0 6px 28px rgba(60, 40, 30, 0.12);
+            --level1: #e8f5e9;
+            --level2: #e3f2fd;
+            --level3: #f3e5f5;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 15%, rgba(180, 160, 140, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 85%, rgba(140, 160, 180, 0.07) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(200, 180, 160, 0.04) 0%, transparent 70%);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px 16px 60px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .header { text-align: center; padding: 28px 20px 18px; position: relative; }
+        .header .icon-row { font-size: 48px; margin-bottom: 8px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; animation: floatIcon 3s ease-in-out infinite; }
+        @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        .header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; color: #3d3a4d; margin: 0; background: linear-gradient(135deg, #5c6b7a 0%, #4a5c6b 40%, #6b7d8e 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .header .subtitle { font-size:0.95rem; color:var(--text-light); margin-top:4px; font-weight:400; }
+
+        .progress-wrap { display:flex; align-items:center; gap:12px; background:var(--card-bg); border-radius:40px; padding:8px 18px; box-shadow:var(--shadow); position:sticky; top:16px; z-index:50; border:1px solid var(--border); }
+        .progress-bar-outer { flex:1; height:10px; background:#eae6df; border-radius:10px; overflow:hidden; }
+        .progress-bar-inner { height:100%; background:linear-gradient(90deg, #66bb6a, #5c9ce6, #ab7db8); background-size:200% 100%; border-radius:10px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1); width:0%; }
+        .progress-text { font-weight:700; font-size:0.9rem; color:var(--text); white-space:nowrap; min-width:55px; text-align:right; }
+        .score-badge { background:#fdf6e3; color:#b8860b; font-weight:700; padding:6px 14px; border-radius:20px; font-size:0.85rem; white-space:nowrap; border:1.5px solid #f0d78c; letter-spacing:0.03em; }
+
+        .question-card { background:var(--card-bg); border-radius:var(--radius); padding:24px 26px; box-shadow:var(--shadow); border:1px solid var(--border); transition:var(--transition); position:relative; overflow:hidden; }
+        .question-card:hover { box-shadow:var(--shadow-hover); }
+        .question-card.completed-correct { border-left:5px solid var(--success); }
+        .question-card.completed-wrong { border-left:5px solid var(--error); }
+        .question-card .level-tag { display:inline-block; font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:20px; letter-spacing:0.04em; margin-bottom:12px; }
+        .level-tag.l1 { background:var(--level1); color:#388e3c; border:1px solid #a5d6a7; }
+        .level-tag.l2 { background:var(--level2); color:#2e6db4; border:1px solid #90caf9; }
+        .level-tag.l3 { background:var(--level3); color:#7b3f8b; border:1px solid #ce93d8; }
+        .question-card .q-number { font-weight:800; font-size:1.05rem; color:var(--text); margin-bottom:6px; }
+        .question-card .q-text { font-size:1rem; color:var(--text); margin-bottom:16px; font-weight:500; line-height:1.5; }
+
+        .net-display { display:inline-grid; gap:2px; margin:4px 0; justify-content:center; align-items:center; }
+        .net-cell { width:26px; height:26px; border-radius:4px; border:1.5px solid rgba(0,0,0,0.18); transition:var(--transition); position:relative; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; color:rgba(0,0,0,0.55); cursor:default; user-select:none; }
+        .net-cell.empty { background:transparent!important; border:none!important; pointer-events:none; }
+
+        .options-area { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+        .option-btn { display:flex; align-items:center; gap:12px; padding:12px 16px; border:2px solid var(--border); border-radius:var(--radius-sm); background:#fafaf8; cursor:pointer; transition:var(--transition); font-size:0.95rem; font-weight:500; text-align:left; position:relative; }
+        .option-btn:active { transform:scale(0.985); transition:0.1s; }
+        .option-btn.selected { border-color:var(--primary); background:#f0f4fa; box-shadow:0 0 0 3px rgba(74,111,165,0.12); }
+        .option-btn.correct-choice { border-color:var(--success)!important; background:#eafaf1!important; box-shadow:0 0 0 4px rgba(76,175,132,0.2)!important; }
+        .option-btn.wrong-choice { border-color:var(--error)!important; background:#fef5f3!important; box-shadow:0 0 0 4px rgba(224,123,108,0.2)!important; animation:shake 0.5s ease; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+        .option-letter { width:32px; height:32px; border-radius:50%; background:#eae6df; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0; transition:var(--transition); color:#5c5a6b; }
+        .correct-choice .option-letter { background:#c8f7d5; color:#2e7d32; }
+        .wrong-choice .option-letter { background:#fdd9d4; color:#c0392b; }
+        .option-content { flex:1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+        .feedback-area { margin-top:14px; padding:14px 18px; border-radius:var(--radius-sm); display:none; font-weight:500; font-size:0.9rem; }
+        .feedback-area.show { display:block; }
+        .feedback-area.correct { background:#eafaf1; color:#2e7d32; border:1.5px solid #a5d6a7; }
+        .feedback-area.wrong { background:#fef5f3; color:#b53a2b; border:1.5px solid #f5c6be; }
+
+        .btn { padding:10px 20px; border-radius:24px; font-weight:600; font-size:0.9rem; cursor:pointer; border:none; transition:var(--transition); letter-spacing:0.03em; }
+        .btn-submit { background:var(--primary); color:#fff; margin-top:10px; }
+        .btn-submit:disabled { background:#c5c0b8; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-reset { background:#fff; color:var(--text); border:2px solid #d5cfc6; margin-top:10px; margin-left:8px; }
+
+        .summary-overlay { position:fixed; inset:0; background:rgba(30,25,20,0.55); z-index:100; display:flex; align-items:center; justify-content:center; }
+        .summary-card { background:#fff; border-radius:var(--radius); padding:32px 28px; max-width:460px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+        .summary-emoji { font-size:72px; margin-bottom:8px; }
+        .summary-grade { font-size:1.4rem; font-weight:700; margin:8px 0; }
+        .summary-detail { color:var(--text-light); margin:6px 0 18px; line-height:1.5; }
+        .stars-row { font-size:36px; letter-spacing:4px; margin:8px 0; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size:1.5rem; }
+            .question-card { padding:16px 14px; }
+            .net-cell { width:20px; height:20px; font-size:8px; border-radius:3px; }
+            .net-display { gap:1px; }
+            .option-btn { padding:10px 12px; font-size:0.85rem; gap:8px; }
+            .option-letter { width:26px; height:26px; font-size:0.78rem; }
+            .progress-wrap { padding:6px 12px; gap:8px; top:8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="icon-row">📐📏🧊</div>
+            <h1>展开与设计 · 课堂练习</h1>
+            <p class="subtitle">正方体展开图 · 分层次闯关</p>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+            <span style="font-size:1.2rem;">📊</span>
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" id="progressBar"></div>
+            </div>
+            <span class="progress-text" id="progressText">0/5 题</span>
+            <span class="score-badge" id="scoreBadge">⭐ 0分</span>
+        </div>
+
+        <div id="questionsContainer"></div>
+
+        <div style="text-align:center;margin-top:4px;">
+            <button class="btn btn-reset" onclick="resetAll()" title="重新开始所有题目">🔄 全部重做</button>
+            <button class="btn btn-submit" id="btnShowSummary" onclick="showSummary()" disabled>
+                📋 查看总评
+            </button>
+        </div>
+    </div>
+
+    <div class="summary-overlay" id="summaryOverlay" style="display:none;">
+        <div class="summary-card" id="summaryCard"></div>
+    </div>
+
+    <script>
+        (function() {
+            const facePalettes = [
+                ['#ff7675', '#fdcb6e', '#74b9ff', '#55efc4', '#a29bfe', '#fd79a8'],
+                ['#fab1a0', '#ffeaa7', '#81ecec', '#dfe6e9', '#b2bec3', '#e8c4a0'],
+                ['#e17055', '#fdcb6e', '#00b894', '#0984e3', '#6c5ce7', '#e84393'],
+            ];
+            const palette = facePalettes[0];
+
+            function makeNetDef(rows, cols, cells, name) {
+                return { rows, cols, cells, name };
+            }
+
+            const net1_4_1_center = makeNetDef(3, 4, [
+                { r: 0, c: 1, f: 0 }, { r: 1, c: 0, f: 1 }, { r: 1, c: 1, f: 2 },
+                { r: 1, c: 2, f: 3 }, { r: 1, c: 3, f: 4 }, { r: 2, c: 2, f: 5 }
+            ], '1-4-1型(中)');
+
+            const net1_4_1_offset = makeNetDef(3, 4, [
+                { r: 0, c: 0, f: 0 }, { r: 1, c: 0, f: 1 }, { r: 1, c: 1, f: 2 },
+                { r: 1, c: 2, f: 3 }, { r: 1, c: 3, f: 4 }, { r: 2, c: 3, f: 5 }
+            ], '1-4-1型(偏)');
+
+            const net2_3_1 = makeNetDef(3, 4, [
+                { r: 0, c: 0, f: 0 }, { r: 0, c: 1, f: 1 },
+                { r: 1, c: 1, f: 2 }, { r: 1, c: 2, f: 3 }, { r: 1, c: 3, f: 4 },
+                { r: 2, c: 3, f: 5 }
+            ], '2-3-1型');
+
+            const net2_2_2_stair = makeNetDef(3, 4, [
+                { r: 0, c: 0, f: 0 }, { r: 0, c: 1, f: 1 },
+                { r: 1, c: 1, f: 2 }, { r: 1, c: 2, f: 3 },
+                { r: 2, c: 2, f: 4 }, { r: 2, c: 3, f: 5 }
+            ], '阶梯型');
+
+            const netBad_Tian = makeNetDef(2, 3, [
+                { r: 0, c: 0, f: 0 }, { r: 0, c: 1, f: 1 }, { r: 0, c: 2, f: 2 },
+                { r: 1, c: 0, f: 3 }, { r: 1, c: 1, f: 4 }, { r: 1, c: 2, f: 5 }
+            ], '2×3田字型(误)');
+
+            const netBad_7cells = makeNetDef(3, 4, [
+                { r: 0, c: 1, f: 0 }, { r: 1, c: 0, f: 1 }, { r: 1, c: 1, f: 2 },
+                { r: 1, c: 2, f: 3 }, { r: 1, c: 3, f: 4 }, { r: 2, c: 1, f: 5 },
+                { r: 2, c: 2, f: 0 }
+            ], '7个面(误)');
+
+            const netBad_Isolated = makeNetDef(3, 4, [
+                { r: 0, c: 0, f: 0 }, { r: 0, c: 3, f: 1 }, { r: 1, c: 0, f: 2 },
+                { r: 1, c: 1, f: 3 }, { r: 1, c: 2, f: 4 }, { r: 1, c: 3, f: 5 }
+            ], '对角分离(误)');
+
+            const netBad_5cells = makeNetDef(2, 3, [
+                { r: 0, c: 0, f: 0 }, { r: 0, c: 1, f: 1 }, { r: 0, c: 2, f: 2 },
+                { r: 1, c: 0, f: 3 }, { r: 1, c: 1, f: 4 }
+            ], '5个面(误)');
+
+            const netNumbered = makeNetDef(3, 4, [
+                { r: 0, c: 1, f: 0 }, { r: 1, c: 0, f: 1 }, { r: 1, c: 1, f: 2 },
+                { r: 1, c: 2, f: 3 }, { r: 1, c: 3, f: 4 }, { r: 2, c: 2, f: 5 }
+            ], '编号展开图');
+
+            function renderNetHTML(netDef, cellSize = 26, highlightFace = -1, showNumbers = false, numberMap = null) {
+                const { rows, cols, cells, name } = netDef;
+                const gridMap = {};
+                cells.forEach(c => { gridMap[`${c.r},${c.c}`] = c.f; });
+
+                let html = `<div class="net-display" style="grid-template-columns:repeat(${cols},${cellSize}px);grid-template-rows:repeat(${rows},${cellSize}px);" title="${name||''}">`;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const key = `${r},${c}`;
+                        if (gridMap[key] !== undefined) {
+                            const fi = gridMap[key];
+                            const bg = palette[fi % palette.length];
+                            const hlClass = (fi === highlightFace) ? ' highlight' : '';
+                            let label = '';
+                            if (showNumbers && numberMap) label = numberMap[fi] || '';
+                            html += `<div class="net-cell${hlClass}" style="background:${bg};" data-face="${fi}">${label}</div>`;
+                        } else {
+                            html += `<div class="net-cell empty"></div>`;
+                        }
+                    }
+                }
+                html += `</div>`;
+                return html;
+            }
+
+            const questionsData = [{
+                id: 1, level: 1, levelLabel: '⭐ 基础层', levelClass: 'l1',
+                qText: '以下哪个展开图<strong>可以</strong>折叠成正方体？',
+                type: 'single',
+                options: [
+                    { letter: 'A', net: net1_4_1_center, label: '1-4-1型展开图', isCorrect: true },
+                    { letter: 'B', net: netBad_Tian, label: '2×3田字型', isCorrect: false },
+                    { letter: 'C', net: netBad_7cells, label: '7个方格', isCorrect: false },
+                    { letter: 'D', net: netBad_5cells, label: '5个方格', isCorrect: false },
+                ],
+                correctIndex: 0,
+                feedbackCorrect: '✅ 正确！1-4-1型是正方体最常见的展开图类型之一，共6种变体。',
+                feedbackWrong: '❌ 注意：正方体展开图必须有<strong>恰好6个面</strong>，且不能出现2×2的田字形。',
+            }, {
+                id: 2, level: 1, levelLabel: '⭐ 基础层', levelClass: 'l1',
+                qText: '判断：以下<strong>2-3-1型</strong>展开图能否折叠成正方体？<br><br>' + renderNetHTML(net2_3_1, 30),
+                type: 'single',
+                options: [
+                    { letter: 'A', textOnly: '✅ 能折叠成正方体', isCorrect: true },
+                    { letter: 'B', textOnly: '❌ 不能折叠成正方体', isCorrect: false },
+                ],
+                correctIndex: 0,
+                feedbackCorrect: '✅ 正确！2-3-1型也是正方体的标准展开图，共有3种变体。',
+                feedbackWrong: '❌ 2-3-1型<strong>可以</strong>折叠成正方体。它是11种标准展开图之一。',
+            }, {
+                id: 3, level: 2, levelLabel: '⭐⭐ 进阶层', levelClass: 'l2',
+                qText: '在下方编号展开图中，折叠成正方体后，与面<strong>①</strong>相对的面是几号？<br><small>（提示：在1-4-1型中，间隔一行的两个面折叠后相对）</small>',
+                type: 'single',
+                showNumberedNet: true,
+                options: [
+                    { letter: 'A', textOnly: '③号面', isCorrect: false },
+                    { letter: 'B', textOnly: '④号面', isCorrect: false },
+                    { letter: 'C', textOnly: '⑤号面', isCorrect: false },
+                    { letter: 'D', textOnly: '⑥号面', isCorrect: true },
+                ],
+                correctIndex: 3,
+                feedbackCorrect: '✅ 正确！在1-4-1型中，第1行和第3行的面折叠后相对，①与⑥相对。',
+                feedbackWrong: '❌ 在1-4-1型展开图中，第1行和第3行的面折叠后正好相对。①在第1行，⑥在第3行。',
+                numberMap: { 0: '①', 1: '②', 2: '③', 3: '④', 4: '⑤', 5: '⑥' },
+            }, {
+                id: 4, level: 2, levelLabel: '⭐⭐ 进阶层', levelClass: 'l2',
+                qText: '以下哪些是正方体的<strong>正确</strong>展开图？（多选，选所有正确的）',
+                type: 'multi',
+                options: [
+                    { letter: 'A', net: net1_4_1_offset, label: '1-4-1型(偏)', isCorrect: true },
+                    { letter: 'B', net: netBad_Tian, label: '2×3田字型', isCorrect: false },
+                    { letter: 'C', net: net2_2_2_stair, label: '阶梯型', isCorrect: true },
+                    { letter: 'D', net: net1_4_1_center, label: '1-4-1型(中)', isCorrect: true },
+                    { letter: 'E', net: netBad_Isolated, label: '对角分离型', isCorrect: false },
+                ],
+                correctIndices: [0, 2, 3],
+                feedbackCorrect: '✅ 正确！1-4-1型(偏)、阶梯型、1-4-1型(中)都是标准展开图。',
+                feedbackWrong: '❌ 正确答案是A、C、D。注意：田字型折叠重叠，对角分离型无法折叠。',
+            }, {
+                id: 5, level: 3, levelLabel: '⭐⭐⭐ 挑战层', levelClass: 'l3',
+                qText: '<strong>【设计题】</strong>小明设计了一个展开图（下方展示），但折叠时发现有两个面会<strong>重叠</strong>。请指出问题并选择修改方案。',
+                type: 'single',
+                showProblemNet: true,
+                problemNet: netBad_Tian,
+                options: [
+                    { letter: 'A', textOnly: '没问题，可以折叠', isCorrect: false },
+                    { letter: 'B', textOnly: '面数不够，需增加1个面', isCorrect: false },
+                    { letter: 'C', textOnly: '存在2×2田字形，需移动一个面打破田字结构', isCorrect: true },
+                    { letter: 'D', textOnly: '颜色搭配有问题', isCorrect: false },
+                ],
+                correctIndex: 2,
+                feedbackCorrect: '✅ 优秀！2×2田字形折叠时会重叠，必须打破这个结构。',
+                feedbackWrong: '❌ 关键问题是存在<strong>2×2田字形</strong>，移动一个面即可解决。',
+            }];
+
+            const userAnswers = {};
+            let totalScore = 0;
+            let answeredCount = 0;
+            const totalQuestions = questionsData.length;
+            const maxScore = totalQuestions;
+            const multiSelections = {};
+
+            function initAll() {
+                const container = document.getElementById('questionsContainer');
+                container.innerHTML = '';
+                for (const key in userAnswers) delete userAnswers[key];
+                for (const key in multiSelections) delete multiSelections[key];
+                totalScore = 0;
+                answeredCount = 0;
+                updateProgress();
+                questionsData.forEach((q, idx) => container.appendChild(createQuestionCard(q, idx)));
+                document.getElementById('btnShowSummary').disabled = true;
+                document.getElementById('summaryOverlay').style.display = 'none';
+            }
+
+            function createQuestionCard(qData, index) {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `qCard${qData.id}`;
+                card.innerHTML = `
+                    <span class="level-tag ${qData.levelClass}">${qData.levelLabel}</span>
+                    <div class="q-number">第 ${index+1} 题 / 共 ${totalQuestions} 题</div>
+                    <div class="q-text">${qData.qText}</div>
+                    ${qData.showNumberedNet ? `<div style="text-align:center;margin:8px 0;">${renderNetHTML(netNumbered, 30, -1, true, qData.numberMap)}</div>` : ''}
+                    ${qData.showProblemNet && qData.problemNet ? `<div style="text-align:center;margin:8px 0;padding:8px;background:#fff5f5;border-radius:10px;border:2px dashed #e0b4b0;"><span style="font-size:0.8rem;color:#c0392b;">⚠️ 有问题的展开图：</span><br>${renderNetHTML(qData.problemNet, 30)}</div>` : ''}
+                    <div class="options-area" id="optionsArea${qData.id}"></div>
+                    <div class="feedback-area" id="feedback${qData.id}"></div>
+                    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                        ${qData.type==='multi' ? `<button class="btn btn-submit" id="btnMultiSubmit${qData.id}" disabled onclick="submitMulti(${qData.id})">确认选择</button>` : ''}
+                        <button class="btn btn-reset" id="resetBtn${qData.id}" style="display:none;" onclick="resetQuestion(${qData.id})">🔄 重做本题</button>
+                    </div>
+                `;
+                const optionsArea = card.querySelector(`#optionsArea${qData.id}`);
+                qData.options.forEach((opt, optIdx) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'option-btn';
+                    btn.id = `optBtn${qData.id}_${optIdx}`;
+                    btn.setAttribute('data-opt-index', optIdx);
+                    let optContentHTML = '';
+                    if (opt.textOnly) {
+                        optContentHTML = `<span>${opt.textOnly}</span>`;
+                    } else if (opt.net) {
+                        const sz = (qData.type === 'multi') ? 22 : 26;
+                        optContentHTML = `${renderNetHTML(opt.net, sz)}<span style="font-size:0.85rem;color:var(--text-light);">${opt.label||''}</span>`;
+                    }
+                    btn.innerHTML = `<span class="option-letter">${opt.letter}</span><span class="option-content">${optContentHTML}</span>`;
+                    if (qData.type === 'single') {
+                        btn.addEventListener('click', () => handleSingleSelect(qData.id, optIdx, btn));
+                    } else if (qData.type === 'multi') {
+                        btn.addEventListener('click', () => handleMultiToggle(qData.id, optIdx, btn));
+                    }
+                    optionsArea.appendChild(btn);
+                });
+                return card;
+            }
+
+            function handleSingleSelect(qId, optIdx, clickedBtn) {
+                if (userAnswers[qId]?.answered) return;
+                const qData = questionsData.find(q => q.id === qId);
+                const isCorrect = (optIdx === qData.correctIndex);
+                const allBtns = document.querySelectorAll(`#optionsArea${qId} .option-btn`);
+                allBtns.forEach(b => b.style.pointerEvents = 'none');
+                clickedBtn.classList.add('selected');
+                if (isCorrect) clickedBtn.classList.add('correct-choice');
+                else {
+                    clickedBtn.classList.add('wrong-choice');
+                    document.querySelector(`#optBtn${qId}_${qData.correctIndex}`)?.classList.add('correct-choice');
+                }
+                const feedbackEl = document.getElementById(`feedback${qId}`);
+                feedbackEl.className = 'feedback-area show ' + (isCorrect ? 'correct' : 'wrong');
+                feedbackEl.innerHTML = isCorrect ? qData.feedbackCorrect : qData.feedbackWrong + `<br>📌 正确答案是选项 <strong>${qData.options[qData.correctIndex].letter}</strong>`;
+                document.getElementById(`qCard${qId}`).classList.add(isCorrect ? 'completed-correct' : 'completed-wrong');
+                const score = isCorrect ? 1 : 0;
+                userAnswers[qId] = { answered: true, correct: isCorrect, score };
+                totalScore += score;
+                answeredCount++;
+                updateProgress();
+                checkAllDone();
+                document.getElementById(`resetBtn${qId}`).style.display = 'inline-block';
+            }
+
+            function handleMultiToggle(qId, optIdx, btn) {
+                if (userAnswers[qId]?.answered) return;
+                if (!multiSelections[qId]) multiSelections[qId] = new Set();
+                if (multiSelections[qId].has(optIdx)) { multiSelections[qId].delete(optIdx); btn.classList.remove('selected'); }
+                else { multiSelections[qId].add(optIdx); btn.classList.add('selected'); }
+                document.getElementById(`btnMultiSubmit${qId}`).disabled = (multiSelections[qId].size === 0);
+            }
+
+            function submitMulti(qId) {
+                if (userAnswers[qId]?.answered) return;
+                const qData = questionsData.find(q => q.id === qId);
+                const selectedSet = multiSelections[qId] || new Set();
+                const correctSet = new Set(qData.correctIndices);
+                const isCorrect = (selectedSet.size === correctSet.size) && [...selectedSet].every(i => correctSet.has(i));
+                const allBtns = document.querySelectorAll(`#optionsArea${qId} .option-btn`);
+                allBtns.forEach(b => b.style.pointerEvents = 'none');
+                selectedSet.forEach(i => {
+                    const btn = document.getElementById(`optBtn${qId}_${i}`);
+                    if (btn) btn.classList.add(correctSet.has(i) ? 'correct-choice' : 'wrong-choice');
+                });
+                correctSet.forEach(i => {
+                    if (!selectedSet.has(i)) document.getElementById(`optBtn${qId}_${i}`)?.classList.add('correct-choice');
+                });
+                const feedbackEl = document.getElementById(`feedback${qId}`);
+                feedbackEl.className = 'feedback-area show ' + (isCorrect ? 'correct' : 'wrong');
+                feedbackEl.innerHTML = isCorrect ? qData.feedbackCorrect : qData.feedbackWrong + `<br>📌 正确选项：<strong>${qData.correctIndices.map(i=>qData.options[i].letter).join('、')}</strong>`;
+                document.getElementById(`qCard${qId}`).classList.add(isCorrect ? 'completed-correct' : 'completed-wrong');
+                document.getElementById(`btnMultiSubmit${qId}`).disabled = true;
+                const score = isCorrect ? 1 : 0;
+                userAnswers[qId] = { answered: true, correct: isCorrect, score };
+                totalScore += score;
+                answeredCount++;
+                updateProgress();
+                checkAllDone();
+                document.getElementById(`resetBtn${qId}`).style.display = 'inline-block';
+            }
+
+            function resetQuestion(qId) {
+                const qData = questionsData.find(q => q.id === qId);
+                if (!qData) return;
+                if (userAnswers[qId]?.answered) {
+                    totalScore -= userAnswers[qId].score;
+                    answeredCount--;
+                    delete userAnswers[qId];
+                }
+                if (multiSelections[qId]) delete multiSelections[qId];
+                document.querySelectorAll(`#optionsArea${qId} .option-btn`).forEach(b => {
+                    b.style.pointerEvents = 'auto';
+                    b.classList.remove('selected', 'correct-choice', 'wrong-choice');
+                });
+                const feedbackEl = document.getElementById(`feedback${qId}`);
+                if (feedbackEl) { feedbackEl.className = 'feedback-area'; feedbackEl.innerHTML = ''; }
+                document.getElementById(`qCard${qId}`)?.classList.remove('completed-correct', 'completed-wrong');
+                if (qData.type === 'multi') document.getElementById(`btnMultiSubmit${qId}`).disabled = true;
+                document.getElementById(`resetBtn${qId}`).style.display = 'none';
+                updateProgress();
+                document.getElementById('btnShowSummary').disabled = (answeredCount < totalQuestions);
+            }
+
+            function updateProgress() {
+                document.getElementById('progressBar').style.width = (answeredCount / totalQuestions * 100) + '%';
+                document.getElementById('progressText').textContent = `${answeredCount}/${totalQuestions} 题`;
+                document.getElementById('scoreBadge').textContent = `⭐ ${totalScore}分`;
+            }
+
+            function checkAllDone() {
+                if (answeredCount >= totalQuestions) {
+                    document.getElementById('btnShowSummary').disabled = false;
+                    setTimeout(() => { if (answeredCount >= totalQuestions) showSummary(); }, 800);
+                }
+            }
+
+            function showSummary() {
+                const overlay = document.getElementById('summaryOverlay');
+                const card = document.getElementById('summaryCard');
+                const ratio = totalScore / maxScore;
+                let emoji, grade, stars, detailMsg;
+                if (ratio >= 1.0) { emoji='🏆'; grade='太棒了！满分通关！'; stars='⭐⭐⭐⭐⭐'; detailMsg=`全部答对，满分 ${totalScore} 分！`; }
+                else if (ratio >= 0.8) { emoji='🌟'; grade='非常优秀！'; stars='⭐⭐⭐⭐'; detailMsg=`答对 ${totalScore}/${totalQuestions} 题。`; }
+                else if (ratio >= 0.6) { emoji='👍'; grade='表现不错！'; stars='⭐⭐⭐'; detailMsg=`答对 ${totalScore}/${totalQuestions} 题。`; }
+                else if (ratio >= 0.4) { emoji='📚'; grade='还需加油！'; stars='⭐⭐'; detailMsg=`答对 ${totalScore}/${totalQuestions} 题。`; }
+                else { emoji='💪'; grade='继续努力！'; stars='⭐'; detailMsg=`答对 ${totalScore}/${totalQuestions} 题。`; }
+                card.innerHTML = `
+                    <div class="summary-emoji">${emoji}</div>
+                    <div class="stars-row">${stars}</div>
+                    <div class="summary-grade">${grade}</div>
+                    <div class="summary-detail">${detailMsg}</div>
+                    <p style="color:var(--text-light);font-size:0.85rem;margin-top:8px;">得分：<strong>${totalScore} / ${maxScore}</strong></p>
+                    <button class="btn btn-submit" onclick="closeSummary()" style="margin-top:14px;">👌 知道了</button>
+                    <button class="btn btn-reset" onclick="closeSummary();resetAll();" style="margin-left:6px;">🔄 重新挑战</button>
+                `;
+                overlay.style.display = 'flex';
+            }
+
+            function closeSummary() { document.getElementById('summaryOverlay').style.display = 'none'; }
+            function resetAll() {
+                for (const key in multiSelections) delete multiSelections[key];
+                for (const key in userAnswers) delete userAnswers[key];
+                totalScore = 0; answeredCount = 0;
+                document.getElementById('summaryOverlay').style.display = 'none';
+                document.getElementById('btnShowSummary').disabled = true;
+                initAll();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            document.addEventListener('click', function(e) { if (e.target === document.getElementById('summaryOverlay')) closeSummary(); });
+            window.submitMulti = submitMulti;
+            window.showSummary = showSummary;
+            window.closeSummary = closeSummary;
+            window.resetAll = resetAll;
+            window.resetQuestion = resetQuestion;
+            initAll();
+        })();
+    </script>
+</body>
+</html>
